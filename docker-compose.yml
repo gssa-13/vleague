@@ -1,0 +1,67 @@
+name: "vl League"
+
+services:
+    php:
+        container_name: "vl-php"
+        build:
+            context: docker/php
+            dockerfile: Dockerfile
+        ports:
+            - "${FORWARD_PHP_PORT:-9003}:9000"
+        volumes:
+            - ./:/var/www/html:delegated
+            - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+            - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+        extra_hosts:
+            - "host.docker.internal:host-gateway" # 🐧 Necesario en Linux
+        networks:
+            - vl_network
+        restart: unless-stopped
+
+    postgres:
+        container_name: "vl-postgres"
+        build:
+            context: docker/postgresql
+            dockerfile: Dockerfile
+        environment:
+            POSTGRES_DB: ${DB_DATABASE:-laravel}
+            POSTGRES_USER: ${DB_USERNAME:-laravel}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+        ports:
+            - "${FORWARD_DB_PORT:-5435}:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        networks:
+            - vl_network
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:-laravel}" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
+
+    nginx:
+        container_name: "vl-nginx"
+        build:
+            context: docker/nginx
+            dockerfile: Dockerfile
+            args:
+                - UID=${UID:-1000}
+                - GID=${GID:-1000}
+        ports:
+            - "${FORWARD_NGINX_PORT:-8080}:80"
+            - "5176:5174"
+            - "5175:5173"
+        volumes:
+            - ./:/var/www/html:delegated
+        networks:
+            - vl_network
+        restart: unless-stopped
+
+networks:
+    vl_network:
+        driver: bridge
+
+volumes:
+    postgres_data:
+        driver: local
