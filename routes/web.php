@@ -3,14 +3,23 @@
 use App\Http\Controllers\Competitions\CompetitionController;
 use App\Http\Controllers\Divisions\DivisionController;
 use App\Http\Controllers\Employees\EmployeeController;
+use App\Http\Controllers\Finance\PaymentController;
+use App\Http\Controllers\GameRoles\GameRoleAssignmentController;
+use App\Http\Controllers\GameRoles\GameRoleController;
 use App\Http\Controllers\IdentityAccess\PermissionController;
 use App\Http\Controllers\IdentityAccess\RoleController;
 use App\Http\Controllers\IdentityAccess\UserController;
+use App\Http\Controllers\Media\MediaController;
 use App\Http\Controllers\Navigation\NavigationItemController;
+use App\Http\Controllers\Payroll\PayrollController;
 use App\Http\Controllers\Players\PlayerController;
+use App\Http\Controllers\PlayerSanctions\PlayerSanctionController;
 use App\Http\Controllers\Prices\CategoryController;
 use App\Http\Controllers\Prices\PriceController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Scheduling\GameController;
+use App\Http\Controllers\Teams\TeamController;
+use App\Http\Controllers\Teams\TeamRosterController;
 use App\Http\Controllers\Tournaments\TournamentController;
 use App\Http\Controllers\Venues\VenueController;
 use Illuminate\Support\Facades\Route;
@@ -143,6 +152,89 @@ Route::middleware('auth')->group(function () {
     Route::put('/players/{player}', [PlayerController::class, 'update'])->name('players.update');
     Route::delete('/players/{player}', [PlayerController::class, 'destroy'])->name('players.destroy');
     Route::post('/players/{id}/restore', [PlayerController::class, 'restore'])->name('players.restore');
+
+    // ─── Teams ────────────────────────────────────────────────────────────────
+
+    Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
+    Route::get('/teams/create', [TeamController::class, 'create'])->name('teams.create');
+    Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
+    Route::get('/teams/{team}/edit', [TeamController::class, 'edit'])->name('teams.edit');
+    Route::put('/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
+    Route::delete('/teams/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
+    Route::post('/teams/{id}/restore', [TeamController::class, 'restore'])->name('teams.restore');
+
+    // Competition team rosters
+    Route::post('/competition-teams/{competitionTeam}/roster', [TeamRosterController::class, 'store'])
+        ->name('competition-teams.roster.store');
+    Route::delete('/competition-teams/{competitionTeam}/roster/{roster}', [TeamRosterController::class, 'destroy'])
+        ->name('competition-teams.roster.destroy');
+
+    // ─── Player Sanctions ─────────────────────────────────────────────────────
+
+    Route::get('/player-sanctions', [PlayerSanctionController::class, 'index'])->name('player-sanctions.index');
+    Route::get('/player-sanctions/create', [PlayerSanctionController::class, 'create'])->name('player-sanctions.create');
+    Route::post('/player-sanctions', [PlayerSanctionController::class, 'store'])->name('player-sanctions.store');
+    Route::get('/player-sanctions/{playerSanction}/edit', [PlayerSanctionController::class, 'edit'])->name('player-sanctions.edit');
+    Route::put('/player-sanctions/{playerSanction}', [PlayerSanctionController::class, 'update'])->name('player-sanctions.update');
+    Route::delete('/player-sanctions/{playerSanction}', [PlayerSanctionController::class, 'destroy'])->name('player-sanctions.destroy');
+    Route::post('/player-sanctions/{id}/restore', [PlayerSanctionController::class, 'restore'])->name('player-sanctions.restore');
+
+    // ─── Scheduling (Games) ───────────────────────────────────────────────────
+
+    Route::get('/games', [GameController::class, 'index'])->name('games.index');
+    Route::get('/games/create', [GameController::class, 'create'])->name('games.create');
+    Route::post('/games', [GameController::class, 'store'])->name('games.store');
+    Route::get('/games/{game}/edit', [GameController::class, 'edit'])->name('games.edit');
+    Route::put('/games/{game}', [GameController::class, 'update'])->name('games.update');
+    Route::delete('/games/{game}', [GameController::class, 'destroy'])->name('games.destroy');
+    Route::post('/games/{id}/restore', [GameController::class, 'restore'])->name('games.restore');
+    Route::post('/games/{game}/cancel', [GameController::class, 'cancel'])->name('games.cancel');
+
+    // Game role assignments (per game)
+    Route::post('/games/{game}/roles', [GameRoleAssignmentController::class, 'store'])->name('games.roles.assign');
+    Route::delete('/games/{game}/roles/{assignment}', [GameRoleAssignmentController::class, 'destroy'])->name('games.roles.revoke');
+
+    // ─── Match Roles (Game Roles) ─────────────────────────────────────────────
+
+    Route::get('/game-roles', [GameRoleController::class, 'index'])->name('game-roles.index');
+    Route::get('/game-roles/create', [GameRoleController::class, 'create'])->name('game-roles.create');
+    Route::post('/game-roles', [GameRoleController::class, 'store'])->name('game-roles.store');
+    Route::get('/game-roles/{gameRole}/edit', [GameRoleController::class, 'edit'])->name('game-roles.edit');
+    Route::put('/game-roles/{gameRole}', [GameRoleController::class, 'update'])->name('game-roles.update');
+    Route::delete('/game-roles/{gameRole}', [GameRoleController::class, 'destroy'])->name('game-roles.destroy');
+    Route::post('/game-roles/{id}/restore', [GameRoleController::class, 'restore'])->name('game-roles.restore');
+
+    // ─── Finance (Payments) ───────────────────────────────────────────────────
+
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/create', [PaymentController::class, 'create'])->name('payments.create');
+    Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
+    Route::get('/payments/{payment}/edit', [PaymentController::class, 'edit'])->name('payments.edit');
+    Route::put('/payments/{payment}', [PaymentController::class, 'update'])->name('payments.update');
+    Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
+    Route::post('/payments/{id}/restore', [PaymentController::class, 'restore'])->name('payments.restore');
+    Route::post('/payments/{payment}/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
+
+    // ─── Payroll ──────────────────────────────────────────────────────────────
+
+    Route::get('/payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
+    Route::get('/payrolls/create', [PayrollController::class, 'create'])->name('payrolls.create');
+    Route::post('/payrolls', [PayrollController::class, 'store'])->name('payrolls.store');
+    Route::get('/payrolls/{payroll}/edit', [PayrollController::class, 'edit'])->name('payrolls.edit');
+    Route::put('/payrolls/{payroll}', [PayrollController::class, 'update'])->name('payrolls.update');
+    Route::delete('/payrolls/{payroll}', [PayrollController::class, 'destroy'])->name('payrolls.destroy');
+    Route::post('/payrolls/{id}/restore', [PayrollController::class, 'restore'])->name('payrolls.restore');
+    Route::post('/payrolls/{payroll}/cancel', [PayrollController::class, 'cancel'])->name('payrolls.cancel');
+
+    // ─── Media ────────────────────────────────────────────────────────────────
+
+    Route::get('/media', [MediaController::class, 'index'])->name('media.index');
+    Route::get('/media/create', [MediaController::class, 'create'])->name('media.create');
+    Route::post('/media', [MediaController::class, 'store'])->name('media.store');
+    Route::get('/media/{media}/edit', [MediaController::class, 'edit'])->name('media.edit');
+    Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
+    Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+    Route::post('/media/{id}/restore', [MediaController::class, 'restore'])->name('media.restore');
 });
 
 require __DIR__.'/auth.php';

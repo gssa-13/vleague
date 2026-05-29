@@ -78,10 +78,31 @@ trait LogsActivity
             'table_name' => $this->getTable(),
             'record_id' => $this->getKey(),
             'column_name' => $columnName,
-            'old_value' => $oldValue !== null ? (string) $oldValue : null,
-            'new_value' => $newValue !== null ? (string) $newValue : null,
+            'old_value' => $this->stringifyActivityValue($oldValue),
+            'new_value' => $this->stringifyActivityValue($newValue),
             'user_id' => Auth::id(),
             'user_ip' => Request::ip(),
         ]);
+    }
+
+    /**
+     * Normalizes a value to a string for activity logging.
+     * Handles backed enums, which cannot be cast to string directly.
+     */
+    private function stringifyActivityValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            return (string) $value->value;
+        }
+
+        if ($value instanceof \UnitEnum) {
+            return $value->name;
+        }
+
+        return (string) $value;
     }
 }
