@@ -20,7 +20,7 @@ it('returns all active items when user has no permission filter', function () {
     ]);
 
     $user = Mockery::mock(User::class);
-    $user->shouldReceive('hasPermissionTo')->never();
+    $user->shouldReceive('can')->never();
 
     $this->repository
         ->shouldReceive('allActive')
@@ -39,7 +39,7 @@ it('filters out items whose permission_name the user does not have', function ()
     $items = new Collection([$publicItem, $restrictedItem]);
 
     $user = Mockery::mock(User::class);
-    $user->shouldReceive('hasPermissionTo')
+    $user->shouldReceive('can')
         ->with('venues.view')
         ->once()
         ->andReturn(false);
@@ -60,7 +60,7 @@ it('includes items whose permission_name the user has', function () {
     $items = new Collection([$restrictedItem]);
 
     $user = Mockery::mock(User::class);
-    $user->shouldReceive('hasPermissionTo')
+    $user->shouldReceive('can')
         ->with('venues.view')
         ->once()
         ->andReturn(true);

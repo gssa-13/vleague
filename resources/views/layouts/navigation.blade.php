@@ -12,9 +12,32 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+                    @foreach ($navigationItems ?? collect() as $item)
+                        @if ($item->children->isEmpty())
+                            <x-nav-link :href="route($item->route_name)" :active="request()->routeIs($item->route_name)">
+                                {{ __($item->label) }}
+                            </x-nav-link>
+                        @else
+                            <x-dropdown align="left" width="48">
+                                <x-slot name="trigger">
+                                    <button class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
+                                        <span>{{ __($item->label) }}</span>
+                                        <svg class="ms-1 h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </x-slot>
+
+                                <x-slot name="content">
+                                    @foreach ($item->children as $child)
+                                        <x-dropdown-link :href="route($child->route_name)">
+                                            {{ __($child->label) }}
+                                        </x-dropdown-link>
+                                    @endforeach
+                                </x-slot>
+                            </x-dropdown>
+                        @endif
+                    @endforeach
                 </div>
             </div>
 
@@ -67,9 +90,22 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
+            @foreach ($navigationItems ?? collect() as $item)
+                @if ($item->children->isEmpty())
+                    <x-responsive-nav-link :href="route($item->route_name)" :active="request()->routeIs($item->route_name)">
+                        {{ __($item->label) }}
+                    </x-responsive-nav-link>
+                @else
+                    <div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase text-gray-500">
+                        {{ __($item->label) }}
+                    </div>
+                    @foreach ($item->children as $child)
+                        <x-responsive-nav-link :href="route($child->route_name)" :active="request()->routeIs($child->route_name)">
+                            {{ __($child->label) }}
+                        </x-responsive-nav-link>
+                    @endforeach
+                @endif
+            @endforeach
         </div>
 
         <!-- Responsive Settings Options -->

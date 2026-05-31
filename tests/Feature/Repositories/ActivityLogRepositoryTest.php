@@ -3,7 +3,9 @@
 // tests/Unit/Repositories/ActivityLogRepositoryTest.php
 
 use App\Models\ActivityLog;
+use App\Models\Role;
 use App\Models\User;
+use App\Models\Venue;
 use App\Repositories\ActivityLogRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -81,4 +83,63 @@ it('returns only trashed logs with onlyTrashed', function () {
 
     expect($results)->toHaveCount(1)
         ->and($results->first()->id)->toBe($trashed->id);
+});
+
+it('searches active logs by model user and date range', function () {
+    $actor = User::factory()->create();
+    $otherActor = User::factory()->create();
+
+    ActivityLog::factory()->create([
+        'model' => Venue::class,
+        'table_name' => 'venues',
+        'user_id' => $actor->id,
+        'new_value' => 'Matching repository log',
+        'created_at' => '2026-05-15 10:00:00',
+    ]);
+
+    ActivityLog::factory()->create([
+        'model' => Role::class,
+        'table_name' => 'roles',
+        'user_id' => $actor->id,
+        'new_value' => 'Wrong repository model',
+        'created_at' => '2026-05-15 10:00:00',
+    ]);
+
+    ActivityLog::factory()->create([
+        'model' => Venue::class,
+        'table_name' => 'venues',
+        'user_id' => $otherActor->id,
+        'new_value' => 'Wrong repository user',
+        'created_at' => '2026-05-15 10:00:00',
+    ]);
+
+    $trashedLog = ActivityLog::factory()->create([
+        'model' => Venue::class,
+        'table_name' => 'venues',
+        'user_id' => $actor->id,
+        'new_value' => 'Trashed repository log',
+        'created_at' => '2026-05-15 10:00:00',
+    ]);
+    $trashedLog->delete();
+
+    $results = $this->repository->search([
+        'model' => Venue::class,
+        'user_id' => $actor->id,
+        'from' => '2026-05-01',
+        'to' => '2026-05-31',
+    ]);
+
+    expect($results)->toHaveCount(1)
+        ->and($results->first()->new_value)->toBe('Matching repository log');
+});
+
+it('finds an active log by id with its user', function () {
+    $user = User::factory()->create(['name' => 'Repository User']);
+    $log = ActivityLog::factory()->create(['user_id' => $user->id]);
+
+    $result = $this->repository->findById($log->id);
+
+    expect($result)->not->toBeNull()
+        ->and($result->is($log))->toBeTrue()
+        ->and($result->user->name)->toBe('Repository User');
 });

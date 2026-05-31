@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Audit\AuditController;
 use App\Http\Controllers\Competitions\CompetitionController;
 use App\Http\Controllers\Divisions\DivisionController;
 use App\Http\Controllers\Employees\EmployeeController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\PlayerSanctions\PlayerSanctionController;
 use App\Http\Controllers\Prices\CategoryController;
 use App\Http\Controllers\Prices\PriceController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Reports\FinancialReportController;
 use App\Http\Controllers\Scheduling\GameController;
 use App\Http\Controllers\Teams\TeamController;
 use App\Http\Controllers\Teams\TeamRosterController;
@@ -235,6 +237,23 @@ Route::middleware('auth')->group(function () {
     Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
     Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
     Route::post('/media/{id}/restore', [MediaController::class, 'restore'])->name('media.restore');
+
+    // ─── Reports ──────────────────────────────────────────────────────────────
+
+    Route::get('/reports/financial', [FinancialReportController::class, 'index'])->name('reports.financial.index');
+    Route::get('/reports/financial/export', [FinancialReportController::class, 'export'])->name('reports.financial.export');
+
+    // ─── Audit ───────────────────────────────────────────────────────────────
+
+    Route::get('/audit', [AuditController::class, 'index'])
+        ->middleware('can:audit.view')
+        ->name('audit.index');
+    Route::get('/audit/export', [AuditController::class, 'export'])
+        ->middleware('can:audit.export')
+        ->name('audit.export');
+    Route::get('/audit/{id}', [AuditController::class, 'show'])
+        ->middleware('can:audit.view')
+        ->name('audit.show');
 });
 
 require __DIR__.'/auth.php';

@@ -8,6 +8,7 @@ use App\Models\NavigationItem;
 use App\Repositories\NavigationRepository;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Route;
 
 class NavigationService
 {
@@ -18,19 +19,24 @@ class NavigationService
     /**
      * Returns navigation items visible to the given user.
      * Items with a null permission_name are visible to all authenticated users.
-     * Items with a permission_name are only visible if the user has that permission.
+     * Items with a permission_name are only visible if the user can pass that ability.
      */
     public function getVisibleItems(Authenticatable $user): Collection
     {
         $items = $this->repository->allActive();
 
-        return $items->filter(function (NavigationItem $item) use ($user) {
-            if ($item->permission_name === null) {
-                return true;
-            }
+        return $items->filter(fn (NavigationItem $item) => $this->canViewItem($item, $user))->values();
+    }
 
-            return $user->hasPermissionTo($item->permission_name);
-        })->values();
+    public function getVisibleTree(Authenticatable $user): Collection
+    {
+        $items = $this->repository->topLevelActiveWithChildren();
+        $visibleItems = $items
+            ->map(fn (NavigationItem $item) => $this->filterVisibleTreeItem($item, $user))
+            ->filter()
+            ->values();
+
+        return new Collection($visibleItems->all());
     }
 
     public function all(): Collection
@@ -66,5 +72,43 @@ class NavigationService
     public function restore(NavigationItem $item): void
     {
         $this->repository->restore($item);
+    }
+
+    private function filterVisibleTreeItem(NavigationItem $item, Authenticatable $user): ?NavigationItem
+    {
+        if (! $this->canViewItem($item, $user)) {
+            return null;
+        }
+
+        if (! $this->hasValidRoute($item)) {
+            return null;
+        }
+
+        $visibleChildren = $item->children
+            ->map(fn (NavigationItem $child) => $this->filterVisibleTreeItem($child, $user))
+            ->filter()
+            ->values();
+
+        $item->setRelation('children', new Collection($visibleChildren->all()));
+
+        if ($item->route_name === null && $item->children->isEmpty()) {
+            return null;
+        }
+
+        return $item;
+    }
+
+    private function canViewItem(NavigationItem $item, Authenticatable $user): bool
+    {
+        if ($item->permission_name === null) {
+            return true;
+        }
+
+        return $user->can($item->permission_name);
+    }
+
+    private function hasValidRoute(NavigationItem $item): bool
+    {
+        return $item->route_name === null || Route::has($item->route_name);
     }
 }

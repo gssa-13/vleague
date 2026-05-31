@@ -14,6 +14,16 @@ class NavigationRepository
         return NavigationItem::orderBy('sort_order')->get();
     }
 
+    public function topLevelActiveWithChildren(): Collection
+    {
+        return NavigationItem::with([
+            'children' => fn ($query) => $query->orderBy('sort_order'),
+        ])
+            ->whereNull('parent_id')
+            ->orderBy('sort_order')
+            ->get();
+    }
+
     public function all(): Collection
     {
         return NavigationItem::orderBy('sort_order')->get();

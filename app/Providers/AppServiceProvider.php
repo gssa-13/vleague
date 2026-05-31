@@ -25,6 +25,7 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Models\Venue;
+use App\Policies\AuditPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\CompetitionPolicy;
 use App\Policies\DivisionPolicy;
@@ -39,13 +40,17 @@ use App\Policies\PermissionPolicy;
 use App\Policies\PlayerPolicy;
 use App\Policies\PlayerSanctionPolicy;
 use App\Policies\PricePolicy;
+use App\Policies\ReportPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\TeamPolicy;
 use App\Policies\TournamentPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\VenuePolicy;
+use App\Services\NavigationService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -67,6 +72,13 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::listen(RoleModified::class, LogRoleActivity::class);
 
+        ViewFacade::composer('layouts.navigation', function ($view) {
+            $user = Auth::user();
+            $items = $user ? app(NavigationService::class)->getVisibleTree($user) : collect();
+
+            $view->with('navigationItems', $items);
+        });
+
         // Register Policies
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
@@ -87,6 +99,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Player::class, PlayerPolicy::class);
         Gate::policy(PlayerSanction::class, PlayerSanctionPolicy::class);
         Gate::policy(Team::class, TeamPolicy::class);
+
+        // Reports are not model-backed — register named gates.
+        Gate::define('reports.view', [ReportPolicy::class, 'view']);
+        Gate::define('reports.export', [ReportPolicy::class, 'export']);
+
+        // Audit is not model-backed — register named gates.
+        Gate::define('audit.view', [AuditPolicy::class, 'view']);
+        Gate::define('audit.export', [AuditPolicy::class, 'export']);
 
         // Super-admin bypasses all Gates — must be checked before any policy.
         Gate::before(function ($user, $ability) {
