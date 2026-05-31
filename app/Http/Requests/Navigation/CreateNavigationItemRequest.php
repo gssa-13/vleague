@@ -18,6 +18,7 @@ class CreateNavigationItemRequest extends FormRequest
     {
         return [
             'label' => ['required', 'string', 'max:100'],
+            'label_key' => ['nullable', 'string', 'max:150'],
             'route_name' => ['nullable', 'string', 'max:100'],
             'icon' => ['nullable', 'string', 'max:100'],
             'permission_name' => ['nullable', 'string', 'max:100'],

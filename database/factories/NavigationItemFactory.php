@@ -19,6 +19,7 @@ class NavigationItemFactory extends Factory
         return [
             'legacy_id' => null,
             'label' => $this->faker->words(2, true),
+            'label_key' => null,
             'route_name' => $this->faker->slug(2),
             'icon' => 'fas fa-circle',
             'permission_name' => null,

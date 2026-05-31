@@ -15,6 +15,7 @@ class NavigationItem extends BaseModel
     protected $fillable = [
         'legacy_id',
         'label',
+        'label_key',
         'route_name',
         'icon',
         'permission_name',

@@ -60,3 +60,11 @@ it('can run the main database seeder more than once', function () {
 
     expect(NavigationItem::count())->toBe($navigationCount);
 });
+
+it('seeds translation keys for base navigation items', function () {
+    $this->seed(NavigationItemsSeeder::class);
+
+    expect(NavigationItem::where('label', 'Dashboard')->value('label_key'))->toBe('navigation.dashboard')
+        ->and(NavigationItem::where('label', 'Permissions')->value('label_key'))->toBe('navigation.permissions')
+        ->and(NavigationItem::where('label', 'Audit')->value('label_key'))->toBe('navigation.audit');
+});

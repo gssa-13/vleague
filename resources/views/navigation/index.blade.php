@@ -17,31 +17,33 @@
                     @can('create', App\Models\NavigationItem::class)
                         <a href="{{ route('navigation.create') }}"
                            class="mb-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded">
-                            Add Item
+                            {{ __('navigation.actions.add_item') }}
                         </a>
                     @endcan
 
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr>
-                                <th class="border-b py-2 pr-4">Label</th>
-                                <th class="border-b py-2 pr-4">Route</th>
-                                <th class="border-b py-2 pr-4">Permission</th>
-                                <th class="border-b py-2 pr-4">Order</th>
-                                <th class="border-b py-2">Actions</th>
+                                <th class="border-b py-2 pr-4">{{ __('navigation.fields.label') }}</th>
+                                <th class="border-b py-2 pr-4">{{ __('navigation.fields.label_key') }}</th>
+                                <th class="border-b py-2 pr-4">{{ __('navigation.fields.route_name') }}</th>
+                                <th class="border-b py-2 pr-4">{{ __('navigation.fields.permission_name') }}</th>
+                                <th class="border-b py-2 pr-4">{{ __('navigation.fields.sort_order') }}</th>
+                                <th class="border-b py-2">{{ __('common.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($items as $item)
                                 <tr>
-                                    <td class="py-2 pr-4">{{ $item->label }}</td>
+                                    <td class="py-2 pr-4">{{ __($item->label_key ?: $item->label) }}</td>
+                                    <td class="py-2 pr-4">{{ $item->label_key ?? '—' }}</td>
                                     <td class="py-2 pr-4">{{ $item->route_name ?? '—' }}</td>
                                     <td class="py-2 pr-4">{{ $item->permission_name ?? '—' }}</td>
                                     <td class="py-2 pr-4">{{ $item->sort_order }}</td>
                                     <td class="py-2 space-x-2">
                                         @can('update', $item)
                                             <a href="{{ route('navigation.edit', $item) }}"
-                                               class="text-indigo-600">Edit</a>
+                                               class="text-indigo-600">{{ __('common.edit') }}</a>
                                         @endcan
                                         @can('delete', $item)
                                             <form method="POST"
@@ -49,7 +51,7 @@
                                                   class="inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-600">Delete</button>
+                                                <button type="submit" class="text-red-600">{{ __('common.delete') }}</button>
                                             </form>
                                         @endcan
                                     </td>

@@ -15,13 +15,13 @@
                     @foreach ($navigationItems ?? collect() as $item)
                         @if ($item->children->isEmpty())
                             <x-nav-link :href="route($item->route_name)" :active="request()->routeIs($item->route_name)">
-                                {{ __($item->label) }}
+                                {{ __($item->label_key ?: $item->label) }}
                             </x-nav-link>
                         @else
                             <x-dropdown align="left" width="48">
                                 <x-slot name="trigger">
                                     <button class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
-                                        <span>{{ __($item->label) }}</span>
+                                        <span>{{ __($item->label_key ?: $item->label) }}</span>
                                         <svg class="ms-1 h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                         </svg>
@@ -31,7 +31,7 @@
                                 <x-slot name="content">
                                     @foreach ($item->children as $child)
                                         <x-dropdown-link :href="route($child->route_name)">
-                                            {{ __($child->label) }}
+                                            {{ __($child->label_key ?: $child->label) }}
                                         </x-dropdown-link>
                                     @endforeach
                                 </x-slot>
@@ -41,38 +41,76 @@
                 </div>
             </div>
 
+            @php
+                $supportedLocales = config('locales.supported', []);
+                $currentLocale = app()->getLocale();
+                $currentLocaleLabelKey = $supportedLocales[$currentLocale]['label_key'] ?? 'common.language';
+            @endphp
+
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
+                <div id="desktop-language-menu" class="me-3" data-current-locale="{{ $currentLocale }}">
+                    <x-dropdown align="right" width="48">
+                        <x-slot name="trigger">
+                            <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-200 text-sm leading-4 font-medium rounded-md text-gray-600 bg-white hover:text-gray-800 hover:border-gray-300 focus:outline-none focus:border-indigo-500 transition ease-in-out duration-150">
+                                <span>{{ __($currentLocaleLabelKey) }}</span>
 
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
 
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
+                        <x-slot name="content">
+                            @foreach ($supportedLocales as $localeCode => $locale)
+                                <form method="POST" action="{{ route('locale.update') }}">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="{{ $localeCode }}">
+                                    <button type="submit"
+                                            class="block w-full px-4 py-2 text-start text-sm leading-5 transition duration-150 ease-in-out {{ $currentLocale === $localeCode ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-700 hover:bg-gray-100 focus:bg-gray-100' }}"
+                                            @if ($currentLocale === $localeCode) aria-current="true" @endif>
+                                        {{ __($locale['label_key']) }}
+                                    </button>
+                                </form>
+                            @endforeach
+                        </x-slot>
+                    </x-dropdown>
+                </div>
 
-                        <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
+                <div id="desktop-profile-menu">
+                    <x-dropdown align="right" width="48">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                <div>{{ Auth::user()->name }}</div>
 
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('profile.edit')">
+                                {{ __('Profile') }}
                             </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
+
+                            <!-- Authentication -->
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+
+                                <x-dropdown-link :href="route('logout')"
+                                        onclick="event.preventDefault();
+                                                    this.closest('form').submit();">
+                                    {{ __('Log Out') }}
+                                </x-dropdown-link>
+                            </form>
+                        </x-slot>
+                    </x-dropdown>
+                </div>
             </div>
 
             <!-- Hamburger -->
@@ -93,15 +131,15 @@
             @foreach ($navigationItems ?? collect() as $item)
                 @if ($item->children->isEmpty())
                     <x-responsive-nav-link :href="route($item->route_name)" :active="request()->routeIs($item->route_name)">
-                        {{ __($item->label) }}
+                        {{ __($item->label_key ?: $item->label) }}
                     </x-responsive-nav-link>
                 @else
                     <div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase text-gray-500">
-                        {{ __($item->label) }}
+                        {{ __($item->label_key ?: $item->label) }}
                     </div>
                     @foreach ($item->children as $child)
                         <x-responsive-nav-link :href="route($child->route_name)" :active="request()->routeIs($child->route_name)">
-                            {{ __($child->label) }}
+                            {{ __($child->label_key ?: $child->label) }}
                         </x-responsive-nav-link>
                     @endforeach
                 @endif
@@ -119,6 +157,21 @@
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
+
+                <form method="POST" action="{{ route('locale.update') }}" class="px-4 py-2">
+                    @csrf
+                    <label for="mobile-locale" class="sr-only">{{ __('common.language') }}</label>
+                    <select id="mobile-locale"
+                            name="locale"
+                            onchange="this.form.submit()"
+                            class="block w-full border-gray-300 rounded-md text-sm text-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
+                        @foreach (config('locales.supported', []) as $localeCode => $locale)
+                            <option value="{{ $localeCode }}" @selected(app()->getLocale() === $localeCode)>
+                                {{ __($locale['label_key']) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">

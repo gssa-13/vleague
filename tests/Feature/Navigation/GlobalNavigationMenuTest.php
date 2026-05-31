@@ -140,3 +140,22 @@ it('shows protected navigation items for super admin users', function () {
         ->assertSee('Identity Group')
         ->assertSee('Permissions Menu');
 });
+
+it('translates navigation labels from label keys', function () {
+    $user = User::factory()->create();
+
+    NavigationItem::factory()->create([
+        'label' => 'Permissions Menu',
+        'label_key' => 'navigation.permissions',
+        'route_name' => 'dashboard',
+        'permission_name' => null,
+        'sort_order' => 1,
+    ]);
+
+    $this->withSession(['locale' => 'es'])
+        ->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Permisos')
+        ->assertDontSee('Permissions Menu');
+});

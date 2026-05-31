@@ -10,6 +10,7 @@ use App\Http\Controllers\GameRoles\GameRoleController;
 use App\Http\Controllers\IdentityAccess\PermissionController;
 use App\Http\Controllers\IdentityAccess\RoleController;
 use App\Http\Controllers\IdentityAccess\UserController;
+use App\Http\Controllers\Localization\LocaleController;
 use App\Http\Controllers\Media\MediaController;
 use App\Http\Controllers\Navigation\NavigationItemController;
 use App\Http\Controllers\Payroll\PayrollController;
@@ -33,6 +34,8 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
